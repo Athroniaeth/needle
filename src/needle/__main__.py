@@ -10,13 +10,13 @@ from needle.cli import cli
 def main():
     """
     Main function to run the application.
-    
+
     Raises:
         SystemExit: If the program is exited.
-    
+
     Returns:
         int: The return code of the program.
-    
+
     """
     # Load dotenv file
     load_dotenv(dotenv_path=PROJECT_PATH / ".env")

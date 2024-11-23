@@ -17,4 +17,4 @@ COPY uv.lock README.md pyproject.toml /app/
 RUN uv sync --frozen
 
 # Run the FastAPI application by default
-CMD ["uv", "run", "needle", "hello-world"]
+CMD ["uv", "run", "needle"]
