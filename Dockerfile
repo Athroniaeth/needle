@@ -16,5 +16,8 @@ COPY uv.lock README.md pyproject.toml /app/
 # Install the dependencies
 RUN uv sync --frozen
 
+# Copy dotenv file config
+COPY .env /app/
+
 # Run the FastAPI application by default
 CMD ["uv", "run", "needle"]
