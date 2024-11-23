@@ -9,11 +9,13 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.5",
+    "python-dotenv>=1.0.1",
+    "typer>=0.13.1",
     "uvicorn>=0.32.1",
 ]
 
 [project.scripts]
-needle = "needle:app"
+needle = "needle:__main__.main"
 
 [build-system]
 requires = ["hatchling"]
