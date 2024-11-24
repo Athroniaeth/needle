@@ -1,8 +1,12 @@
+import gradio as gr
 from fastapi import FastAPI
+
+from needle.interface import blocks
 
 app = FastAPI()
 
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app = gr.mount_gradio_app(
+    app=app,
+    path="/",
+    blocks=blocks,
+)
