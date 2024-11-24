@@ -7,14 +7,21 @@ WORKDIR /app
 # Install uv
 RUN pip install uv
 
-# Copy the source code
-COPY src /app/src
+# Copy the necessary (fake) files for uv install this allows you to install
+# uv without losing the `uv sync` cache after modifying pyproject or README
+COPY docker/cache /app/
 
 # Copy the necessary files for uv install
-COPY uv.lock README.md pyproject.toml /app/
+COPY uv.lock /app/
 
 # Install the dependencies
 RUN uv sync --frozen
+
+# Copy the source code
+COPY src /app/src
+
+# Replace skeleton by content
+COPY uv.lock /app/
 
 # Copy dotenv file config
 COPY .env /app/
