@@ -8,15 +8,9 @@ cli = Typer()
 
 @cli.command()
 def run(
-    app: str = typer.Option(
-        "needle.app:app", envvar="APP", help="Application to launch."
-    ),
-    host: str = typer.Option(
-        "localhost", envvar="HOST", help="Address on which the server should listen."
-    ),
-    port: int = typer.Option(
-        8000, envvar="PORT", help="Port on which the server should listen."
-    ),
+    app: str = typer.Option("needle.app:app", envvar="APP", help="Application to launch."),
+    host: str = typer.Option("localhost", envvar="HOST", help="Address on which the server should listen."),
+    port: int = typer.Option(8000, envvar="PORT", help="Port on which the server should listen."),
 ):
     """
     Start the server with the given parameters.
