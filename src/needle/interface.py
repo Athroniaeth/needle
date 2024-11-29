@@ -3,9 +3,12 @@ import random
 import time
 
 with gr.Blocks() as demo:
-    chatbot = gr.Chatbot(type="messages")
-    msg = gr.Textbox()
-    clear = gr.Button("Clear")
+    with gr.Column(variant="compact"):
+        chatbot = gr.Chatbot(type="messages")
+
+        with gr.Row():
+            msg = gr.Textbox()
+            clear = gr.Button("Clear")
 
     def user(user_message, history: list):
         return "", history + [{"role": "user", "content": user_message}]
@@ -15,7 +18,7 @@ with gr.Blocks() as demo:
         history.append({"role": "assistant", "content": ""})
         for character in bot_message:
             history[-1]['content'] += character
-            time.sleep(0.05)
+            time.sleep(0.01)
             yield history
 
     msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
