@@ -1,36 +1,132 @@
-import time
-from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 import gradio as gr
 
 
-@dataclass
-class Message:
+class MetaData(TypedDict):
+    title: Optional[str]
+
+
+class Message(TypedDict):
+    """
+    Gradio message chatbot representation
+
+    Args:
+    ----
+        role (str): User or chatbot
+        content (str): Message content
+        metadata (MetaData): Additional message information
+
+    Returns:
+    -------
+        Message: Gradio message chatbot representation
+
+    """
+
     role: str
     content: str
-    title: Optional[str] = field(default=None)
-
-    @classmethod
-    def from_gradio_dict(cls, data: dict):
-        return cls(role=data["role"], title=data['metadata']['title'], content=data['content'])
+    metadata: MetaData
 
 
-def yes(message: str, history: List[dict]):
-    history = [Message.from_gradio_dict(x) for x in history]
-    print(type(message), type(history))
-    print(history)
-    return "yes"
+def echo(message: str, history: List[Message]) -> str:
+    """
+    Get the assistant response message
+
+    Args:
+    ----
+        message (str): User message
+        history (List[Message]): Chatbot history
+
+    Returns:
+    -------
+        str: Chatbot response message
+
+    """
+    return message
 
 
-def vote(data: gr.LikeData):
+def vote(data: gr.LikeData) -> None:
+    """
+    Get the user vote response
+
+    Args:
+    ----
+        data (gr.LikeData): User vote data
+
+    Returns:
+    -------
+        None: Print the user vote response
+
+    """
     if data.liked:
         print("You upvoted this response: ", data.value)
     else:
         print("You downvoted this response: ", data.value)
 
 
-with (gr.Blocks() as demo):
+def undo(list_messages: List[Message]) -> gr.update:
+    """
+    Gradio pipeline to undo the last message
+
+    Args:
+    ----
+        list_messages (List[Message]): Chatbot history
+
+    Returns:
+    -------
+        List[Message]: Chatbot history without the last message
+
+    """
+    if len(list_messages) >= 2:
+        return gr.update(value=list_messages[:-2])
+
+    gr.Warning("History haven't enough messages to undo")
+    return gr.update(value=list_messages)
+
+
+def clear():
+    """
+    Gradio pipeline to clear the chatbot history
+
+    Returns
+    -------
+        List[Message]: Empty chatbot history
+
+    """
+    return gr.update(value=[])
+
+
+def retry(list_messages: List[Message]):
+    """
+    Gradio pipeline to retry the last user message
+
+    Args:
+    ----
+        list_messages (List[Message]): Chatbot history
+
+    Returns:
+    -------
+        List[Message]: Chatbot history with the last user message
+
+    """
+    if len(list_messages) < 2:
+        gr.Warning("History haven't enough messages to retry")
+        return gr.update(value=list_messages)
+
+    # Get the last user message
+    message = list_messages[-2]["content"]
+
+    # Remove user and chatbot messages
+    list_messages = list_messages[:-1]
+
+    # Add user message to the list
+    response = echo(message, list_messages)
+    list_messages.append({"role": "assistant", "content": response, "metadata": {"title": None}})
+
+    return gr.update(value=list_messages)
+
+
+with gr.Blocks() as demo:
     chatbot = gr.Chatbot(
         placeholder="<h1 style='text-align: center;'>Chatbot</h1><strong>Enter any ask or say something</strong>",
         type="messages",
@@ -39,52 +135,21 @@ with (gr.Blocks() as demo):
 
     with gr.Row():
         with gr.Column(scale=10):
-            gr.ChatInterface(fn=yes, type="messages", chatbot=chatbot)
+            gr.ChatInterface(fn=echo, type="messages", chatbot=chatbot)
 
         with gr.Column(min_width=0):
             button_undo = gr.Button(value="↩️")
-
-            def undo(list_messages):
-                if len(list_messages) >= 2:
-                    return gr.update(value=list_messages[:-2])
-
-                gr.Warning("History haven't enough messages to undo")
-                return gr.update(value=list_messages)
-
-            button_undo.click(undo, inputs=[chatbot], outputs=[chatbot])
+            button_undo.click(undo, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
         with gr.Column(min_width=0):
             button_retry = gr.Button(value="🔄")
-
-            def retry(list_messages):
-
-                if len(list_messages) < 2:
-                    gr.Warning("History haven't enough messages to retry")
-                    return gr.update(value=list_messages)
-
-                # Get the last user message
-                message = list_messages[-2]
-
-                # Remove user and chatbot messages
-                list_messages = list_messages[:-1]
-
-                # Add user message to the list
-                response = yes(message, list_messages)
-                list_messages.append({"role": "assistant", "content": response, "metadata": {"title": None}})
-
-                return gr.update(value=list_messages)
-
-            button_retry.click(retry, inputs=[chatbot], outputs=[chatbot])
+            button_retry.click(retry, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
         with gr.Column(min_width=0):
             button_clear = gr.Button(value="❌")
+            button_clear.click(clear, outputs=[chatbot], show_api=False)
 
-            def clear():
-                return gr.update(value=[])
-
-            button_clear.click(clear, outputs=[chatbot])
-
-    chatbot.like(vote)
+    chatbot.like(vote, show_api=False)
 
 if __name__ == "__main__":
     demo.launch()
