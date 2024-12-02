@@ -126,7 +126,7 @@ def retry(list_messages: List[Message]):
     return gr.update(value=list_messages)
 
 
-with gr.Blocks() as demo:
+with gr.Blocks() as blocks:
     chatbot = gr.Chatbot(
         placeholder="<h1 style='text-align: center;'>Chatbot</h1><strong>Enter any ask or say something</strong>",
         type="messages",
@@ -152,4 +152,4 @@ with gr.Blocks() as demo:
     chatbot.like(vote, show_api=False)
 
 if __name__ == "__main__":
-    demo.launch()
+    blocks.launch()
