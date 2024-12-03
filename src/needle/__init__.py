@@ -7,3 +7,4 @@ APP_PATH = Path(__file__).parents[0].absolute()
 
 # Define the path to the environment file
 ENV_PATH = PROJECT_PATH / ".env"
+CSS_PATH = APP_PATH / "static" / "css" / "extra.css"

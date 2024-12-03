@@ -1,0 +1,7 @@
+/* Gradio footer (API link and 'create by Gradio') */
+footer.svelte-1rjryqp {
+    visibility: hidden;
+    position: absolute;
+    width: 0;
+    height: 0;
+}

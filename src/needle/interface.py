@@ -2,6 +2,8 @@ from typing import List, Optional, TypedDict
 
 import gradio as gr
 
+from needle import CSS_PATH
+
 
 class MetaData(TypedDict):
     title: Optional[str]
@@ -126,11 +128,14 @@ def retry(list_messages: List[Message]):
     return gr.update(value=list_messages)
 
 
-with gr.Blocks() as blocks:
+css = CSS_PATH.read_text()
+
+
+with gr.Blocks(css=css) as blocks:
     chatbot = gr.Chatbot(
         placeholder="<h1 style='text-align: center;'>Chatbot</h1><strong>Enter any ask or say something</strong>",
         type="messages",
-        height=550,
+        height=575,
     )
 
     with gr.Row():
