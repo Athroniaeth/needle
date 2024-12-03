@@ -2,7 +2,7 @@ from typing import List, Optional, TypedDict
 
 import gradio as gr
 
-from needle import CSS_PATH
+from needle.utils import load_css, load_html
 
 
 class MetaData(TypedDict):
@@ -44,10 +44,10 @@ def echo(message: str, history: List[Message]) -> str:
         str: Chatbot response message
 
     """
-    return message
+    return f"Assistant response to: '{message[:150]}...'"
 
 
-def vote(data: gr.LikeData) -> None:
+def vote(data: gr.LikeData, list_messages: List[Message]) -> None:
     """
     Get the user vote response
 
@@ -60,10 +60,16 @@ def vote(data: gr.LikeData) -> None:
         None: Print the user vote response
 
     """
+    index = data.index[0]
+    response = list_messages[index]["content"]
+    message = list_messages[index - 1]["content"]
+
     if data.liked:
-        print("You upvoted this response: ", data.value)
+        vote = "👍"
     else:
-        print("You downvoted this response: ", data.value)
+        vote = "👎"
+
+    print(f"User vote: {vote} - Message: '{message}' - Response: '{response}'")
 
 
 def undo(list_messages: List[Message]) -> gr.update:
@@ -86,7 +92,7 @@ def undo(list_messages: List[Message]) -> gr.update:
     return gr.update(value=list_messages)
 
 
-def clear():
+def clear(list_messages: Optional[List[Message]] = None) -> gr.update:
     """
     Gradio pipeline to clear the chatbot history
 
@@ -95,6 +101,10 @@ def clear():
         List[Message]: Empty chatbot history
 
     """
+    if not list_messages:
+        gr.Warning("History is already empty")
+        return gr.update(value=[])
+
     return gr.update(value=[])
 
 
@@ -128,7 +138,8 @@ def retry(list_messages: List[Message]):
     return gr.update(value=list_messages)
 
 
-css = CSS_PATH.read_text()
+css = load_css("extra")
+placeholder = load_html("placeholder")
 
 
 with gr.Blocks(css=css) as blocks:
@@ -143,18 +154,18 @@ with gr.Blocks(css=css) as blocks:
             gr.ChatInterface(fn=echo, type="messages", chatbot=chatbot)
 
         with gr.Column(min_width=0):
-            button_undo = gr.Button(value="↩️")
+            button_undo = gr.Button(value="↩️ Undo")
             button_undo.click(undo, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
         with gr.Column(min_width=0):
-            button_retry = gr.Button(value="🔄")
+            button_retry = gr.Button(value="🔄 Retry")
             button_retry.click(retry, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
         with gr.Column(min_width=0):
-            button_clear = gr.Button(value="❌")
+            button_clear = gr.Button(value="❌ Clear")
             button_clear.click(clear, outputs=[chatbot], show_api=False)
 
-    chatbot.like(vote, show_api=False)
+    chatbot.like(vote, inputs=[chatbot], show_api=False)
 
 if __name__ == "__main__":
     blocks.launch()
