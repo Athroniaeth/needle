@@ -4,9 +4,12 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from needle.exception import http_exception_handler
 
 from needle.interface import blocks
+from needle.middleware import LoggingMiddleware
 
 app = FastAPI()
 
+# Middleware
+app.add_middleware(LoggingMiddleware)
 
 # Exceptions handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
