@@ -13,6 +13,7 @@ dependencies = [
     "haystack-ai>=2.7.0",
     "prometheus-fastapi-instrumentator>=7.0.0",
     "python-dotenv>=1.0.1",
+    "toml>=0.10.2",
     "typer>=0.13.1",
     "uvicorn>=0.32.1",
 ]
