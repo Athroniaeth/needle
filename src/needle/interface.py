@@ -163,7 +163,7 @@ with gr.Blocks(css=css) as blocks:
 
         with gr.Column(min_width=0):
             button_clear = gr.Button(value="❌ Clear")
-            button_clear.click(clear, outputs=[chatbot], show_api=False)
+            button_clear.click(clear, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
     chatbot.like(vote, inputs=[chatbot], show_api=False)
 
