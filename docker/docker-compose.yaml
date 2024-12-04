@@ -1,6 +1,6 @@
 services:
   fastapi:
-    build: .
+    build: ../
     container_name: fastapi
     ports:
       - "8000:8000"
@@ -32,7 +32,7 @@ services:
     networks:
       - app_network
     env_file:
-      - .env
+      - ../.env
     entrypoint: /entrypoint.sh
 
 
