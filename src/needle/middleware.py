@@ -1,7 +1,7 @@
-from datetime import datetime
 from typing import Callable
 
 from fastapi import Request
+from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
@@ -20,10 +20,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         """
         address_ip = request.client.host
         port = request.client.port
-        today = datetime.now()
+
+        # if ping to metrics, ignore logging
+        if request.url.path == "/metrics":
+            return await call_next(request)
 
         # Log the request
-        print(f"{today} - {address_ip}:{port} - {request.method} - {request.url}")
+        logger.info(f"{address_ip}:{port} - {request.method} - {request.url}")
 
         # Call the next middleware
         return await call_next(request)

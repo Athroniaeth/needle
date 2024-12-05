@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, TypedDict
 
 import gradio as gr
@@ -54,6 +55,7 @@ def vote(data: gr.LikeData, list_messages: List[Message]) -> None:
     Args:
     ----
         data (gr.LikeData): User vote data
+        list_messages (List[Message]): Chatbot history
 
     Returns:
     -------
@@ -69,7 +71,7 @@ def vote(data: gr.LikeData, list_messages: List[Message]) -> None:
     else:
         vote = "👎"
 
-    print(f"User vote: {vote} - Message: '{message}' - Response: '{response}'")
+    logging.debug(f"User vote: {vote} - Message: '{message}' - Response: '{response}'")
 
 
 def undo(list_messages: List[Message]) -> gr.update:

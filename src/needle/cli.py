@@ -1,10 +1,11 @@
-import logging
 import os
 
 import typer
+from loguru import logger
 from typer import Typer
 
 from needle import CONFIG_PATH
+from needle._logging import setup_logger, Level
 from needle.settings import Settings
 
 cli = Typer()
@@ -17,6 +18,7 @@ def run(
     port: int = typer.Option(8000, envvar="PORT", help="Port on which the server should listen."),
     workers: int = typer.Option(1, help="Number of worker processes to use."),
     debug: bool = typer.Option(False, envvar="DEBUG", help="Enable debug mode."),
+    log_level: Level = typer.Option(Level.INFO, envvar="LOG_LEVEL", help="Logging level for the application."),
 ):
     """
     Start the server with the given parameters.
@@ -25,9 +27,13 @@ def run(
         app (str): Application to launch.
         host (str): Host IP address of the server.
         port (int): Port number of host server.
+        workers (int): Number of worker processes to use.
+        debug (bool): Enable debug mode.
+        log_level (Level): Logging level for the application.
 
     """
-    print(f"Starting the server with host: '{host}' and port: '{port}'")
+    # Setup the logger for the application
+    setup_logger(level=log_level)
 
     # Save the settings for uvicorn child processes
     settings = Settings(debug=debug)
@@ -60,10 +66,14 @@ def launch_app(
     """
     import uvicorn
 
-    if (workers is None) or (workers < 1):
-        workers = max(1, os.cpu_count())
+    # Log the start of the server
+    logger.info(f"Starting the server with host: '{host}' and port: '{port}'")
 
-    print(f"Number of workers: {workers} (max: {os.cpu_count()})")
+    max_workers = os.cpu_count()
+    workers = 1 if (workers is None) or (workers < 1) else workers
+    workers = min(workers, max_workers)
+
+    logger.info(f"Uvicorn using {workers}/{max_workers} workers")
 
     uvicorn.run(
         app=app,
