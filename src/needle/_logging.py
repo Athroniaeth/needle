@@ -52,8 +52,7 @@ def set_level(level: Level):
     for index, handler in logger._core.handlers.items():  # noqa
         logger._core.handlers[index]._levelno = loguru_level.no  # noqa
 
-    # Increase the log level to display it even in production
-    logger.success(f"Application change the logging level to '{level}'")
+    logger.info(f"Application change the logging level to '{level}'")
 
 
 def set_level_logging(custom_logger: logging.Logger, logging_level_loguru: Level):
@@ -94,9 +93,6 @@ def setup_logger(
 
     """
     log_file = LOGGING_PATH / f"{name}.log"
-
-    # Remove default loguru's handler
-    logger.remove(0)
 
     # Add a new handler for file (will be use for stdout)
     logger.add(
