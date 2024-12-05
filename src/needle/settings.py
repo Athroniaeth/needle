@@ -8,6 +8,17 @@ import toml
 
 @dataclass
 class Settings:
+    """
+    Configuration settings for the application.
+
+    Notes:
+        This configuration exists because when you want to start uvicorn with workers, you have to pass
+        the application to the command line. This prevents parameters from being loaded via the CLI,
+        since uvicorn doesn't pass through the `cli.py` file but goes to `app.py`. We therefore
+        create a configuration file when launching via CLI (which will indicate the parameters)
+        which will be read when the `app.py` file is executed.
+    """
+
     debug: bool = False
 
     @classmethod

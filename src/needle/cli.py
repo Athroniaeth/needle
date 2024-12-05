@@ -69,11 +69,13 @@ def launch_app(
     # Log the start of the server
     logger.info(f"Starting the server with host: '{host}' and port: '{port}'")
 
+    # Get the number of workers to use
     max_workers = os.cpu_count()
-    workers = 1 if (workers is None) or (workers < 1) else workers
+    workers = 1 if workers is None else workers
+    workers = max_workers if workers < 1 else workers
     workers = min(workers, max_workers)
 
-    logger.info(f"Uvicorn using {workers}/{max_workers} workers")
+    logger.info(f"Uvicorn start server with {workers}/{max_workers} workers")
 
     uvicorn.run(
         app=app,

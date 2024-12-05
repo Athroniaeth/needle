@@ -12,7 +12,7 @@ DEFAULT_FORMAT = (
     "<cyan>{file}</cyan>:"
     "<cyan>{function}</cyan>:"
     "</red><cyan>{line}</cyan> - "
-    "<level>{message}</level>\n"
+    "<level>{message}</level>"
 )
 
 
