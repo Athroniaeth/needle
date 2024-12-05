@@ -6,9 +6,56 @@ from typer import Typer
 
 from needle import CONFIG_PATH
 from needle._logging import setup_logger, Level
-from needle.settings import Settings
+from needle.settings import Environment, get_info_environment, Settings
+from needle.config import Config
 
 cli = Typer()
+# Create global settings
+settings = Settings()
+
+
+@cli.command()
+def start(
+    environment: Environment = typer.Option(Environment.DEVELOPMENT, envvar="ENVIRONMENT", help="Environment to use."),
+    app: str = typer.Option("needle.app:app", envvar="APP", help="Application to launch."),
+    workers: int = typer.Option(1, help="Number of worker processes to use."),
+    debug: bool = typer.Option(False, help="Enable debug mode."),
+    log_level: Level = typer.Option(Level.INFO, help="Logging level for the application."),
+):
+    """
+    Start the server with the given environment.
+
+    Args:
+        environment (Environment): Environment to use.
+        workers (int): Number of worker processes to use.
+        debug (bool): Enable debug mode.
+        log_level (Level): Logging level for the application.
+
+    """
+    # Get the settings for the application
+    import needle
+
+    # Setup the logger for the application
+    setup_logger(level=log_level)
+    print(f"Settings : {needle.settings}")
+    logger.info(f"Starting the server with environment: '{environment}'")
+
+    # Load the settings for the given environment
+    new_settings = get_info_environment(environment)  # obtain ssl files by env var
+
+    # Update the settings with the new environment
+    needle.settings = new_settings(**needle.settings.model_dump(by_alias=True))
+
+    print(f"Settings 2 : {needle.settings}")
+
+    run(
+        app=app,
+        host=needle.settings.host,
+        port=needle.settings.port,
+        workers=workers,
+        debug=debug,
+        log_level=log_level,
+    )
 
 
 @cli.command()
@@ -36,7 +83,7 @@ def run(
     setup_logger(level=log_level)
 
     # Save the settings for uvicorn child processes
-    settings = Settings(debug=debug)
+    settings = Config(debug=debug)
     settings.to_toml(CONFIG_PATH)
 
     # Run the FastAPI application with the given environment

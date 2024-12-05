@@ -1,58 +1,142 @@
-import os
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Union
+from enum import StrEnum
+from typing import Any, Type
 
-import toml
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass
-class Settings:
+class Environment(StrEnum):
     """
-    Configuration settings for the application.
+    Environment to use (local or ovh cloud).
 
     Notes:
-        This configuration exists because when you want to start uvicorn with workers, you have to pass
-        the application to the command line. This prevents parameters from being loaded via the CLI,
-        since uvicorn doesn't pass through the `cli.py` file but goes to `app.py`. We therefore
-        create a configuration file when launching via CLI (which will indicate the parameters)
-        which will be read when the `app.py` file is executed.
+        - DEVELOPMENT: Local environment (without Docker, without SSL).
+        - PRODUCTION: Production environment (with Docker, with SSL).
+
     """
 
-    debug: bool = False
+    DEVELOPMENT = "development"
+    PRODUCTION = "production"
+    STAGING = "staging"
 
-    @classmethod
-    def from_toml(cls, path: Union[str, os.PathLike]):
+
+class Settings(BaseSettings):
+    """
+    Configuration settings for the entire application.
+
+    Attributes:
+        environment (Environment): Environment to use
+        host (str): Server host IP address.
+        model_config (SettingsConfigDict): Model configuration.
+
+    """
+
+    # Environment configuration CLI
+    domain: str = Field("localhost", alias="DOMAIN")
+
+    # Network server configuration
+    host: str = Field(default="localhost", alias="HOST")
+    port: int = Field(default=8000, alias="PORT")
+
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8",
+        extra='ignore',
+    )
+
+    @property
+    def uri(self) -> str:
         """
-        Load the settings from a TOML file.
-
-        Args:
-            path (str): Path to the TOML file.
+        Get the URI with the given environment variables.
 
         Returns:
-            Settings: Settings instance.
+            str: The URI with the given environment variables.
 
         """
-        path = Path(path)
+        return f"https://{self.domain}" if "localhost" not in self.domain else f"http://{self.domain}"
 
-        if not path.exists():
-            raise FileNotFoundError(f"Settings file not found at: '{path}'")
-
-        with open(path, "r") as f:
-            return cls(**toml.load(f))
-
-    def to_toml(self, path: Union[str, os.PathLike]):
+    @property
+    def uri_callback(self) -> str:
         """
-        Save the settings to a TOML file.
+        Get the URI with the given environment variables.
 
-        Args:
-            path (str): Path to the TOML file.
+        Returns:
+            str: The URI with the given environment variables.
 
         """
-        path = Path(path)
+        return f"{self.uri}/callback"
 
-        if not path.exists():
-            path.touch()
 
-        with open(path, "w") as f:
-            toml.dump(self.__dict__, f)
+class DevelopmentSettings(Settings):
+    """
+    Settings for the development environment.
+
+    Notes:
+        - Force host to 'localhost"
+        - Force port to 7860
+        - Force domain with port
+
+    """
+
+    def model_post_init(self, __context: Any):  # noqa: D102
+        self.host = "localhost"
+        self.port = 8000
+
+        self.domain = f"{self.host}:{self.port}"
+
+
+class StagingSettings(Settings):
+    """
+    Settings for the staging environment.
+
+    Notes:
+        - Force host to '0.0.0.0'
+        - Force port to 8000
+
+    """
+
+    def model_post_init(self, __context: Any):  # noqa: D102
+        self.host = "0.0.0.0"  # noqa: S104
+        self.port = 8000
+        self.domain = f"http://{self.domain}"
+
+
+class ProductionSettings(Settings):
+    """
+    Settings for the production environment.
+
+    Notes:
+        - Force host to '0.0.0.0'
+        - Force port to 8000 (Nginx handle SSL)
+        - Force domain without port (Nginx handle port 443)
+
+    """
+
+    def model_post_init(self, __context: Any):  # noqa: D102
+        self.host = "0.0.0.0"  # noqa: S104
+        self.port = 8000
+        self.domain = f"https://{self.domain}"
+
+
+def get_info_environment(environment: Environment = Environment.DEVELOPMENT) -> Type[Settings]:
+    """
+    Get the information of the environment.
+
+    Args:
+        environment (Environment): The environment to use.
+
+    Returns:
+        Type[Settings]: The settings class of the environment.
+
+    """
+    mapping = {
+        Environment.DEVELOPMENT: DevelopmentSettings,
+        Environment.PRODUCTION: ProductionSettings,
+        Environment.STAGING: StagingSettings,
+    }
+
+    result = mapping.get(environment)
+
+    if result is None:
+        raise ValueError(f"Invalid environment: {environment}")
+
+    return result

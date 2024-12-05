@@ -1,5 +1,6 @@
 import logging
 from enum import StrEnum
+from functools import lru_cache
 
 from loguru import logger
 
@@ -73,6 +74,7 @@ def set_level_logging(custom_logger: logging.Logger, logging_level_loguru: Level
     custom_logger.setLevel(logging_level)
 
 
+@lru_cache(maxsize=1)
 def setup_logger(
     name: str = "app",
     rotation: str = "06:00",
@@ -110,4 +112,4 @@ def setup_logger(
     # Change the level of the logger (else not working)
     set_level(level)
 
-    logger.debug(f"Application start to logging in '{log_file}'")
+    logger.info(f"Logger setup with level: '{level}'")

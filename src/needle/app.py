@@ -7,7 +7,7 @@ from needle import CONFIG_PATH
 from needle.exception import http_exception_handler
 from needle.interface import blocks
 from needle.middleware import LoggingMiddleware
-from needle.settings import Settings
+from needle.config import Config
 
 
 def get_fastapi_app(
@@ -69,7 +69,7 @@ def get_gradio_app(
 # Check if the script is run by uvicorn
 
 # Get config create by CLI
-settings = Settings.from_toml(CONFIG_PATH)
+settings = Config.from_toml(CONFIG_PATH)
 
 """
 WARNING: Don't use '/' for path, gradio prevents prometheus
@@ -85,3 +85,7 @@ app = get_gradio_app(
     blocks=blocks,
     debug=settings.debug,
 )
+
+from needle import settings
+
+print(f"Settings 3 : {settings}")

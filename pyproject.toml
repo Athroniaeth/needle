@@ -13,6 +13,7 @@ dependencies = [
     "haystack-ai>=2.7.0",
     "loguru>=0.7.2",
     "prometheus-fastapi-instrumentator>=7.0.0",
+    "pydantic-settings>=2.6.1",
     "python-dotenv>=1.0.1",
     "toml>=0.10.2",
     "typer>=0.13.1",
