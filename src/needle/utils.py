@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from needle import STATIC_PATH
+from needle import STATIC_PATH, TEMPLATE_PATH
 
 
 @lru_cache(maxsize=128)
@@ -43,5 +43,26 @@ def load_html(filename: str) -> str:
 
     if not path.exists():
         raise FileNotFoundError(f"HTML file not found: '{path}'")
+
+    return path.read_text()
+
+
+def load_template(filename: str) -> str:
+    """
+    Load the template file from the static folder
+
+    Args:
+    ----
+        filename (str): Template filename
+
+    Returns:
+    -------
+        str: Template content
+
+    """
+    path = TEMPLATE_PATH / f"{filename}.jinja2"
+
+    if not path.exists():
+        raise FileNotFoundError(f"Template file not found: '{path}'")
 
     return path.read_text()

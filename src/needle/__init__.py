@@ -12,6 +12,7 @@ ENV_PATH = PROJECT_PATH / ".env"
 STATIC_PATH = APP_PATH / "static"
 LOGGING_PATH = PROJECT_PATH / ".log"
 CONFIG_PATH = PROJECT_PATH / "config.toml"
+TEMPLATE_PATH = APP_PATH / "templates"
 
 # Global settings for the application
 settings = Settings(_env_file=ENV_PATH)

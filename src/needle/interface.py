@@ -6,7 +6,7 @@ from haystack import Pipeline
 from haystack.components.builders import PromptBuilder
 from haystack.components.generators import OpenAIGenerator
 
-from needle.utils import load_css, load_html
+from needle.utils import load_css, load_html, load_template
 
 
 class MetaData(TypedDict):
@@ -35,13 +35,7 @@ class Message(TypedDict):
 
 
 # Prepare the prompt_builder component
-prompt_template = """
-You are a kind assistant and you are here to help people to find the information they need.
-If you don't know the answer, simply say, "I don't know".
-
-Question: {{question}}
-Answer:
-"""
+prompt_template = load_template("system")
 prompt_builder = PromptBuilder(template=prompt_template)
 
 # Prepare the llm component
