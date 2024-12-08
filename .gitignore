@@ -242,4 +242,4 @@ cython_debug/
 .idea/
 
 # Settings create for transfert CLI config to uvicorn
-settings.toml
+config.toml
