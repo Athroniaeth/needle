@@ -17,6 +17,7 @@ class Config:
         since uvicorn doesn't pass through the `cli.py` file but goes to `app.py`. We therefore
         create a configuration file when launching via CLI (which will indicate the parameters)
         which will be read when the `app.py` file is executed.
+
     """
 
     debug: bool = False
