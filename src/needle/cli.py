@@ -27,6 +27,7 @@ def start(
 
     Args:
         environment (Environment): Environment to use.
+        app (str): Application source to launch.
         workers (int): Number of worker processes to use.
         debug (bool): Enable debug mode.
         log_level (Level): Logging level for the application.

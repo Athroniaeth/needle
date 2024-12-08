@@ -1,5 +1,6 @@
 import logging
-from typing import List, Optional, TypedDict
+from functools import partial
+from typing import List, Optional, TypedDict, Callable
 
 import gradio as gr
 from haystack import Pipeline
@@ -96,75 +97,77 @@ def clear(list_messages: Optional[List[Message]] = None) -> gr.update:
     return gr.update(value=[])
 
 
-def get_gradio_app(
-    model_name: str = "gpt-4o-mini",
-    prompt_template: str = "system",
-) -> gr.Blocks:
+def echo(
+    message: str,
+    history: List[Message],
+    chat_pipeline: Pipeline,
+) -> str:
     """
-    Create a Gradio interface with the chatbot components
+    Get the assistant response message
 
     Args:
     ----
-        model_name (str): OpenAI model name
-        prompt_template (str): Prompt template name
-        extra_css (str): Extra CSS filename
-        extra_html (str): Extra HTML filename
+        message (str): User message
+        history (List[Message]): Chatbot history
+        chat_pipeline (Pipeline): Chatbot pipeline
 
     Returns:
     -------
-        gr.Blocks: Gradio blocks instance
+        str: Chatbot response message
 
     """
+    # Start inference with the chat pipeline
+    result = chat_pipeline.run({"prompt_builder": {"question": message}})
+    return result["llm"]["replies"][0]
 
-    def echo(message: str, history: List[Message]) -> str:
-        """
-        Get the assistant response message
 
-        Args:
-        ----
-            message (str): User message
-            history (List[Message]): Chatbot history
+def retry(list_messages: List[Message], callback_echo: Callable[[str, List[Message]], str]) -> gr.update:
+    """
+    Gradio pipeline to retry the last user message
 
-        Returns:
-        -------
-            str: Chatbot response message
+    Args:
+    ----
+        list_messages (List[Message]): Chatbot history
+        callback_echo (Callable[[str, List[Message]], str]): Chatbot echo function (easily dependency injection)
 
-        """
-        # Start inference with the chat pipeline
-        result = chat_pipeline.run({"prompt_builder": {"question": message}})
-        return result["llm"]["replies"][0]
+    Returns:
+    -------
+        List[Message]: Chatbot history with the last user message
 
-    def retry(list_messages: List[Message]):
-        """
-        Gradio pipeline to retry the last user message
-
-        Args:
-        ----
-            list_messages (List[Message]): Chatbot history
-
-        Returns:
-        -------
-            List[Message]: Chatbot history with the last user message
-
-        """
-        if len(list_messages) < 2:
-            gr.Warning("History haven't enough messages to retry")
-            return gr.update(value=list_messages)
-
-        # Get the last user message
-        message = list_messages[-2]["content"]
-
-        # Remove user and chatbot messages
-        list_messages = list_messages[:-1]
-
-        # Add user message to the list
-        response = echo(message, list_messages)
-        list_messages.append({"role": "assistant", "content": response, "metadata": {"title": None}})
-
+    """
+    if len(list_messages) < 2:
+        gr.Warning("History haven't enough messages to retry")
         return gr.update(value=list_messages)
 
+    # Get the last user message
+    message = list_messages[-2]["content"]
+
+    # Remove user and chatbot messages
+    list_messages = list_messages[:-1]
+
+    # Add user message to the list
+    response = callback_echo(message, list_messages)
+    list_messages.append({"role": "assistant", "content": response, "metadata": {"title": None}})
+
+    return gr.update(value=list_messages)
+
+
+def get_llm_pipeline(
+    model_name: str,
+    prompt_template: str,
+) -> Pipeline:
+    """
+    Create the chatbot pipeline with the components
+
+    Args:
+        model_name (str): OpenAI model name
+        prompt_template (str): Prompt template string
+
+    Returns:
+        Pipeline: Chatbot pipeline instance
+
+    """
     # Prepare the prompt_builder component
-    prompt_template = load_template(prompt_template)
     prompt_builder = PromptBuilder(template=prompt_template)
 
     # Prepare the llm component
@@ -180,8 +183,39 @@ def get_gradio_app(
     # Make the connections between components in the pipeline
     chat_pipeline.connect("prompt_builder", "llm")
 
+    return chat_pipeline
+
+
+def get_gradio_app(
+    model_name: str = "gpt-4o-mini",
+    prompt_template: str = "system",
+) -> gr.Blocks:
+    """
+    Create a Gradio interface with the chatbot components
+
+    Args:
+    ----
+        model_name (str): OpenAI model name
+        prompt_template (str): Prompt template filename
+        extra_css (str): Extra CSS filename
+        extra_html (str): Extra HTML filename
+
+    Returns:
+    -------
+        gr.Blocks: Gradio blocks instance
+
+    """
+    # Load the CSS and HTML files
     css = load_css("extra")
     placeholder = load_html("placeholder")
+
+    # Get the chatbot pipeline
+    prompt_template = load_template(prompt_template)
+    chat_pipeline = get_llm_pipeline(model_name, prompt_template)
+
+    # Create the chatbot echo function with the chat pipeline
+    _echo = partial(echo, chat_pipeline=chat_pipeline)
+    _retry = partial(retry, callback_echo=_echo)
 
     with gr.Blocks(css=css) as blocks:
         chatbot = gr.Chatbot(
@@ -192,7 +226,7 @@ def get_gradio_app(
 
         with gr.Row():
             with gr.Column(scale=10):
-                gr.ChatInterface(fn=echo, type="messages", chatbot=chatbot)
+                gr.ChatInterface(fn=_echo, type="messages", chatbot=chatbot)
 
             with gr.Column(min_width=0):
                 button_undo = gr.Button(value="↩️ Undo")
@@ -200,7 +234,7 @@ def get_gradio_app(
 
             with gr.Column(min_width=0):
                 button_retry = gr.Button(value="🔄 Retry")
-                button_retry.click(retry, inputs=[chatbot], outputs=[chatbot], show_api=False)
+                button_retry.click(_retry, inputs=[chatbot], outputs=[chatbot], show_api=False)
 
             with gr.Column(min_width=0):
                 button_clear = gr.Button(value="❌ Clear")
