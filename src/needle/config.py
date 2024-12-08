@@ -21,6 +21,8 @@ class Config:
     """
 
     debug: bool = False
+    model_name: str = "gpt-4o-mini"
+    prompt_template: str = "system"
 
     @classmethod
     def from_toml(cls, path: Union[str, os.PathLike]):

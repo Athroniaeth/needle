@@ -1,11 +1,10 @@
 import gradio as gr
 from fastapi import FastAPI, HTTPException
-from gradio import Blocks
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from needle import CONFIG_PATH
 from needle.exception import http_exception_handler
-from needle.interface import blocks
+from needle.interface import get_gradio_app
 from needle.middleware import LoggingMiddleware
 from needle.config import Config
 
@@ -38,34 +37,6 @@ def get_fastapi_app(
     return app
 
 
-def get_gradio_app(
-    app: FastAPI,
-    blocks: Blocks,
-    debug: bool = False,
-):
-    """
-    Create a Gradio application with the given FastAPI application and blocks.
-
-    Args:
-        app (FastAPI): FastAPI application instance.
-        blocks (Blocks): Gradio blocks instance.
-        debug (bool): Enable debug mode of app.
-
-    Returns:
-        Gradio: Gradio application instance.
-
-    """
-    # Mount the Gradio application
-    app = gr.mount_gradio_app(
-        app=app,
-        path="/app",
-        blocks=blocks,
-        show_error=debug,
-    )
-
-    return app
-
-
 # Check if the script is run by uvicorn
 
 # Get config create by CLI
@@ -79,11 +50,18 @@ Routes defined as /metrics are hidden by the Gradio application mounted on '/'.
 # Get the FastAPI application
 app = get_fastapi_app(debug=settings.debug)
 
+# Get the Gradio application
+blocks = get_gradio_app(
+    model_name=settings.model_name,
+    prompt_template=settings.prompt_template,
+)
+
 # Mount the Gradio application
-app = get_gradio_app(
+app = gr.mount_gradio_app(
     app=app,
+    path="/app",
     blocks=blocks,
-    debug=settings.debug,
+    show_error=settings.debug,
 )
 
 from needle import settings
