@@ -129,4 +129,5 @@ def launch_app(
         host=host,
         port=port,
         workers=workers,
+        log_level="critical",
     )
